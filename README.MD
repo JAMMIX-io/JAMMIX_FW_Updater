@@ -1,3 +1,14 @@
+#	JAMMIX Firmware Updater core
+
+Based on the work by JimmyStones and others (see below).
+
+This core allows flashing of a firmware binary to the STM32 on JAMMIX, for future updates.
+
+It uses the standard MiSTer OSD menu to load the firmware file, and shows a few steps to carry out the update.
+
+This is currently an early version, and will get updated very soon.
+
+
 #	MiSTer Input Tester
 
 ## Overview
