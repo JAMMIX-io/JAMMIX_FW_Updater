@@ -123,26 +123,16 @@ bool bdown_down_last = 0;
 #define HISTORY_LENGTH 6
 char history[HISTORY_LENGTH];
 
-#define PAD_COUNT 2
+#define PAD_COUNT 4
 #define BUTTON_COUNT 12
 
-char pad_offset_x[PAD_COUNT] = {7, 7};
-char pad_offset_y[PAD_COUNT] = {7, 16};
-char button_name[BUTTON_COUNT][6] = {
-	"R",
-	"L",
-	"D",
-	"U",
-	"A",
-	"B",
-	"X",
-	"Y",
-	"L",
-	"R",
-	"Sel",
-	"Start"};
-char button_x[BUTTON_COUNT] = {6, 2, 4, 4, 24, 22, 22, 20, 3, 23, 9, 13};
-char button_y[BUTTON_COUNT] = {3, 3, 4, 2, 3, 4, 2, 3, 0, 0, 3, 3};
+char pad_offset_x[PAD_COUNT] = {7, 7, 7, 7};
+char pad_offset_y[PAD_COUNT] = {2, 7, 12, 17};
+
+char button_name[BUTTON_COUNT][6] = {"R", "L", "D", "U", "1", "2", "3", "4", "5", "6", "Coin", "Start"};
+
+char button_x[BUTTON_COUNT] 	  = { 6,   2,   4,   4,   21,  23,  25,  21,  23,  25,   9,      14};
+char button_y[BUTTON_COUNT] 	  = { 3,   3,   4,   2,   2,   2,   2,   4,   4,   4,    3,      3};
 
 char analog_offset_x[PAD_COUNT] = {1, 20};
 char analog_offset_y[PAD_COUNT] = {5, 5};
@@ -150,6 +140,13 @@ char analog_size = 18;
 signed char analog_x[PAD_COUNT];
 signed char analog_y[PAD_COUNT];
 char analog_ratio = 256 / 17;
+
+	
+bool p1_pass [BUTTON_COUNT];
+bool p2_pass [BUTTON_COUNT];
+bool p3_pass [BUTTON_COUNT];
+bool p4_pass [BUTTON_COUNT];
+
 
 // Draw static elements for digital input test page
 void page_inputtester_digital()
@@ -159,7 +156,7 @@ void page_inputtester_digital()
 	clear_chars(0);
 	page_border(0b00000111);
 
-	write_string("- MiSTer Input Tester -", 0b11100011, 8, 1);
+	write_string("- JAMMIX Test Jig v1.0 -", 0b11100011, 9, 1);
 	write_string("Hold: Select=analog Start=advanced", 0b11100011, 3, 29);
 
 	// Draw pads
@@ -178,7 +175,7 @@ void page_inputtester_analog()
 	clear_chars(0);
 	page_border(0b00000111);
 
-	write_string("- MiSTer Input Tester -", 0b11100011, 8, 1);
+	write_string("- JAMMIX Test Jig v1.0 -", 0b11100011, 9, 1);
 	write_string("Hold: Select=digital Start=advanced", 0b11100011, 3, 29);
 
 	for (j = 0; j < PAD_COUNT; j++)
@@ -197,7 +194,7 @@ void page_inputtester_advanced()
 	clear_chars(0);
 	page_border(0b00000111);
 
-	write_string("- MiSTer Input Tester -", 0b11100011, 8, 1);
+	write_string("- JAMMIX Test Jig v1.0 -", 0b11100011, 9, 1);
 	write_string("Hold: Select=digital Start=analog", 0b11100011, 3, 29);
 
 	write_string("RLDUABXYLRsS", 0xFF, 7, 3);
@@ -469,7 +466,9 @@ bool modeswitcher()
 void inputtester_digital()
 {
 	char joy, index, button, color;
-
+	
+	char pressed = 0;
+	
 	// Handle PS/2 inputs whenever possible to improve latency
 	handle_ps2();
 
@@ -495,8 +494,18 @@ void inputtester_digital()
 			index = joy * 32;
 			for (button = 0; button < BUTTON_COUNT; button++)
 			{
-				color = (button < 8 ? CHECK_BIT(joystick[index], button) : CHECK_BIT(joystick[index + 8], button - 8)) ? 0xFF : 0b10010010;
-				write_string(button_name[button], color, pad_offset_x[joy] + button_x[button], pad_offset_y[joy] + button_y[button]);
+				pressed = (button < 8 ? CHECK_BIT(joystick[index], button) : CHECK_BIT(joystick[index + 8], button - 8));	// (bits are split across more than one BYTE.)
+				color = 0b10010010; // Default button color when NOT pressed. (or not set to Green/Red for Pass/Fail yet.)
+				
+				switch (joy) {
+					case 0: if (pressed) {p1_pass[button]=1; color=0xFF;} else if (p1_pass[button]) color = 0x38; break;
+					case 1: if (pressed) {p2_pass[button]=1; color=0xFF;} else if (p2_pass[button]) color = 0x38; break;
+					case 2: if (pressed) {p3_pass[button]=1; color=0xFF;} else if (p3_pass[button]) color = 0x38; break;
+					case 3: if (pressed) {p4_pass[button]=1; color=0xFF;} else if (p4_pass[button]) color = 0x38; break;
+				}
+				
+				if ( (joy==2 || joy==3) && (button==8 || button==9) ) {}
+				else write_string(button_name[button], color, pad_offset_x[joy] + button_x[button], pad_offset_y[joy] + button_y[button]);
 			}
 		}
 	}
@@ -917,13 +926,17 @@ char send_get_command() {
 	if (nbr>12) ck = wait_uart_recv();		// Get Checksum command. (usually 0xA1. Only for bootloader V3.3).
 	sprintf(mystring, "nb:%02X b:%02X gt:%02X vr:%02X id:%02X rd:%02X go:%02X", nbr, bt, get, ver, id, rd, go); write_string(mystring, 0b11100011, 0, text_line); text_line++;
 	sprintf(mystring, "wr:%02X e:%02X wp:%02X wu:%02X rp:%02X ru:%02X ck:%02X", wr, er, wp, wup, rp, rup, ck); write_string(mystring, 0b11100011, 0, text_line); text_line++;
+	
+	return 0;
 }
 
 char write_unprot() {
-		write_string("Sending Write Unprot command...", 0b11100011, 0, text_line); text_line++;
-		uart_send(0x73); uart_send(0x8C);	// Send Write Unprotect command, plus checksum.
-		//small_delay();
-		if (check_ack()) return 2;
+	write_string("Sending Write Unprot command...", 0b11100011, 0, text_line); text_line++;
+	uart_send(0x73); uart_send(0x8C);	// Send Write Unprotect command, plus checksum.
+	//small_delay();
+	if (check_ack()) return 2;
+		
+	return 0;
 }
 
 char erase_chip() {	
@@ -1027,11 +1040,26 @@ char update_fw() {
 	unsigned char temp;
 	unsigned char nack_byte;
 	
+	clear_chars(0);	// Clear the screen first. (The old/default os.bin might have loaded with the core - wipe out anything that's already in Char RAM.)
+
+	text_line = 3;
+	write_string("     JAMMIX Firmware Updater v1.0      ", 0b11100011, 0, text_line); text_line++;
+	text_line++;
+	write_string("1. Set DIP switches 7, 8, 9 to ON", 0b11100011, 0, text_line); text_line++;
+	write_string("2. Use 'Mount fw file' to Load STM32_FW", 0b11100011, 0, text_line); text_line++;
+	write_string("3. Briefly press the STM32 Reset button", 0b11100011, 0, text_line); text_line++;
+	write_string("4. Use 'Flash Firmware!' option", 0b11100011, 0, text_line); text_line++;
+	
+	while (1) {
+		if (load_fw) break;
+	}
+	
 	clear_chars(0);	// Clear the screen.
 	
 	//temp = sd_flags[4];	// Clear any old flags by reading first.
 	
 	text_line = 3;
+	
 	write_string("Sending INIT command...", 0b11100011, 0, text_line); text_line++;
 	uart_send(0x7F);
 	if (check_ack()) return 12;
@@ -1045,6 +1073,11 @@ char update_fw() {
 	//check_ack();	
 	
 	temp = sd_flags[4];	// Clear any old flags by reading first.
+	text_line++;
+	write_string("(if Erasing takes more than 20 seconds,", 0b11100011, 0, text_line); text_line++;
+	write_string("please use Reset core option on OSD,", 0b11100011, 0, text_line); text_line++;
+	write_string("then retry the steps)", 0b11100011, 0, text_line); text_line++;
+	text_line++;
 	nack_byte = erase_chip();
 	if (nack_byte) {
 		sprintf(mystring, "Erase ERROR: %d", nack_byte);
@@ -1052,7 +1085,7 @@ char update_fw() {
 		return 13;
 	}
 	
-	text_line++;
+	text_line++; text_line++;
 	sprintf(mystring, "img_size: %08X", img_size);
 	write_string(mystring, 0b11100011, 0, text_line); text_line++; text_line++;
 	
@@ -1075,29 +1108,32 @@ char update_fw() {
 		flash_addr += 256;
 	}
 	
-	write_string("DONE!                     ", 0b11100011, 0, 18);
-	write_string("Set DIP switches 7, 8, 9 to OFF.", 0b11100011, 0, 22);
-	write_string("Disconnect and reconnect power to JAMMIX.", 0b11100011, 0, 23);
+	write_string("DONE!                     ", 0b11100011, 0, 19);
+	write_string("Set DIP switches 7, 8, 9 to OFF.", 0b11100011, 0, 23);
+	write_string("Disconnect and reconnect power to JAMMIX.", 0b11100011, 0, 24);
 	
-	return 0;
+	//return 0;
+	while (1) {}
 }
 
 
 // Main entry and state machine
 void main()
 {
-	clear_chars(0);		// Clear the screen first. (The old/default os.bin might have loaded with the core - wipe out anything that's already in Char RAM.)
-
-	text_line = 3;
-	write_string("     JAMMIX Firmware Updater v1.0      ", 0b11100011, 0, text_line); text_line++;
-	text_line++;
-	write_string("1. Set DIP switches 7, 8, 9 to ON", 0b11100011, 0, text_line); text_line++;
-	write_string("2. Use 'Mount fw file' to Load STM32_FW", 0b11100011, 0, text_line); text_line++;
-	write_string("3. Briefly press the STM32 Reset button", 0b11100011, 0, text_line); text_line++;
-	write_string("4. Use 'Flash Firmware!' option", 0b11100011, 0, text_line); text_line++;
-
-	while (1) {
-		if (load_fw) {
+	char temp = sd_flags[4];	// Clear any old flags by reading first.
+	int i;
+	
+	for (i=0; i<=BUTTON_COUNT; i++) {
+		p1_pass[i]=0;
+		p2_pass[i]=0;
+		p3_pass[i]=0;
+		p4_pass[i]=0;
+	}
+	
+	//chram_size = chram_cols * chram_rows;
+	while (1)
+	{
+		if (img_just_loaded) {
 			// Only using the lower four bytes for this atm (32 bits is plenty).
 			img_size = (sd_flags[12]<<24) | (sd_flags[13]<<16) | (sd_flags[14]<<8) | (sd_flags[15]<<0);
 			if (img_size==0) {
@@ -1106,35 +1142,28 @@ void main()
 			}
 			else update_fw();
 		}
-	}
-	
-
-	//chram_size = chram_cols * chram_rows;
-	while (1)
-	{
-		//if (load_fw) update_fw();
 		
 		//sprintf(mystring, "img_size: %02X%02X%02X%02X%02X%02X%02X%02X", sd_flags[8],sd_flags[9],sd_flags[10],sd_flags[11],sd_flags[12],sd_flags[13],sd_flags[14],sd_flags[15]);
 		//write_string(mystring, 0b11100011, 5, 22);
 		
-		sprintf(mystring, "  sd_lba: %02X%02X%02X%02X  sd_flags: %02X", sd_flags[0],sd_flags[1],sd_flags[2],sd_flags[3],  sd_flags[4]);
-		write_string(mystring, 0b11100011, 5, 23);
+		//sprintf(mystring, "  sd_lba: %02X%02X%02X%02X  sd_flags: %02X", sd_flags[0],sd_flags[1],sd_flags[2],sd_flags[3],  sd_flags[4]);
+		//write_string(mystring, 0b11100011, 5, 23);
 		
-		sprintf(mystring, "  sd_buf: %02X%02X%02X%02X", sd_buf[0],sd_buf[1],sd_buf[2],sd_buf[3]);
-		write_string(mystring, 0b11100011, 5, 24);
+		//sprintf(mystring, "  sd_buf: %02X%02X%02X%02X", sd_buf[0],sd_buf[1],sd_buf[2],sd_buf[3]);
+		//write_string(mystring, 0b11100011, 5, 24);
 		
-		sprintf(mystring, "txd_data: %02X  rxd_data: %02X", sd_flags[16], sd_flags[18]);
-		write_string(mystring, 0b11100011, 5, 25);
+		//sprintf(mystring, "txd_data: %02X  rxd_data: %02X", sd_flags[16], sd_flags[18]);
+		//write_string(mystring, 0b11100011, 5, 25);
 		
 		hsync = input0 & 0x80;
 		vsync = input0 & 0x40;
 		switch (state)
 		{
 		case STATE_START_INPUTTESTER:
-			//start_inputtester_digital();
+			start_inputtester_digital();
 			break;
 		case STATE_INPUTTESTER:
-			//inputtester_digital();
+			inputtester_digital();
 			break;
 
 		case STATE_START_INPUTTESTERADVANCED:

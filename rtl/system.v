@@ -186,7 +186,7 @@ async_receiver async_receiver_stm
 );
 
 
-localparam [8:0] VGA_WIDTH = 9'd320;
+localparam [8:0] VGA_WIDTH = 9'd308;
 localparam [8:0] VGA_HEIGHT = 9'd240;
 
 wire _hb;
@@ -342,7 +342,7 @@ assign cpu_din = pgrom_cs ? pgrom_data_out :
 				 spinner_cs ? spinner_data_out :
 				 ps2_key_cs ? ps2_key_data_out :
 				 ps2_mouse_cs ? ps2_mouse_data_out :
-				 sdflags_cs ? sd_flags_mux :			 
+				 sdflags_cs ? sd_flags_mux :
 				 sdbuf_cs ? sd_buf_data :
 				 8'b00000000;
 

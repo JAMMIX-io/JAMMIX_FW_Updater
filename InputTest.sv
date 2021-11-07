@@ -200,7 +200,7 @@ assign BUTTONS = 0;
 // 0         1         2         3          4         5         6
 // 01234567890123456789012345678901 23456789012345678901234567890123
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-//  X X X  XX
+// XX      XX
 
 wire [1:0] ar = status[9:8];
 
@@ -215,12 +215,13 @@ localparam CONF_STR = {
 	"-;",
 	"T1,Flash Firmware!;",
 	"-;",
-	"O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
+	"T0,Reset core (retry);",
 	"-;",
 	"F0,BIN,Load BIOS;",
 	"F1,PF,Load Font;",
 	"-;",
-	"J1,A,B,X,Y,L,R,Select,Start,C,Z;",
+	"O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
+	"J1,B1,B2,B3,B4,B5,B6,Coin,Start;",
 	"V,v",`BUILD_DATE
 };
 

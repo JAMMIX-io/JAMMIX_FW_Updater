@@ -196,41 +196,42 @@ void draw_pad(char xo, char yo)
 	char x, y;
 	
 	// Outline
-	write_char(134, color_pad_outline, xo, yo + 1);
-	for (x = 1; x < 26; x++)
+	write_char(134, color_pad_outline, xo, yo + 1);				// Top-left corner.
+	for (x = 1; x < 27; x++)
 	{
-		write_char(135, color_pad_outline, xo + x, yo + 1);
+		write_char(135, color_pad_outline, xo + x, yo + 1);		// Top line.
 	}
-	write_char(136, color_pad_outline, xo + 26, yo + 1);
+	write_char(136, color_pad_outline, xo + 27, yo + 1);		// Top-right corner.
+	
 	for (y = 2; y < 5; y++)
 	{
 		write_char(137, color_pad_outline, xo, yo + y);
-		write_char(137, color_pad_outline, xo + 26, yo + y);
+		write_char(137, color_pad_outline, xo + 27, yo + y);	// Right-hand vert line.
 	}
 	write_char(139, color_pad_outline, xo, yo + 5);
-	write_char(138, color_pad_outline, xo + 26, yo + 5);
+	write_char(138, color_pad_outline, xo + 27, yo + 5);
 
-	write_char(138, color_pad_outline, xo + 8, yo + 5);
-	write_char(139, color_pad_outline, xo + 18, yo + 5);
+	write_char(138, color_pad_outline, xo + 8, yo + 5);		// Middle-left corner bit.
+	write_char(139, color_pad_outline, xo + 19, yo + 5);	// Middle-right corner bit.
 	write_char(134, color_pad_outline, xo + 8, yo + 4);
-	write_char(136, color_pad_outline, xo + 18, yo + 4);
+	write_char(136, color_pad_outline, xo + 19, yo + 4);
 	for (x = 1; x < 8; x++)
 	{
-		write_char(135, color_pad_outline, xo + x, yo + 5);
+		write_char(135, color_pad_outline, xo + x, yo + 5);	// Lower-left horiz line.
 	}
-	for (x = 9; x < 18; x++)
+	for (x = 9; x < 19; x++)
 	{
-		write_char(135, color_pad_outline, xo + x, yo + 4);
+		write_char(135, color_pad_outline, xo + x, yo + 4);	// Lower-mid horiz line.
 	}
-	for (x = 19; x < 26; x++)
+	for (x = 20; x < 27; x++)								
 	{
-		write_char(135, color_pad_outline, xo + x, yo + 5);
+		write_char(135, color_pad_outline, xo + x, yo + 5);	// Lower-right horiz line.
 	}
 	// Shoulders
-	write_char(134, color_pad_outline, xo + 1, yo);
-	write_char(136, color_pad_outline, xo + 5, yo);
-	write_char(134, color_pad_outline, xo + 21, yo);
-	write_char(136, color_pad_outline, xo + 25, yo);
+	//write_char(134, color_pad_outline, xo + 1, yo);
+	//write_char(136, color_pad_outline, xo + 5, yo);
+	//write_char(134, color_pad_outline, xo + 21, yo);
+	//write_char(136, color_pad_outline, xo + 25, yo);
 }
 
 char color_analog_grid = 0x23;
