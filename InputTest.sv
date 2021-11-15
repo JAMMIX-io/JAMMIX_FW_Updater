@@ -211,7 +211,7 @@ assign VIDEO_ARY = (!ar) ? 12'd3 : 12'd0;
 localparam CONF_STR = {
 	"JAMMIX_FW;;",
 	"-;",
-	"S0,BIN,Mount fw file;",
+	"S0,BIN,Mount FW file;",
 	"-;",
 	"T1,Flash Firmware!;",
 	"-;",

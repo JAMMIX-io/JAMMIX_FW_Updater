@@ -157,12 +157,15 @@ void page_inputtester_digital()
 	page_border(0b00000111);
 
 	write_string("- JAMMIX Test Jig v1.0 -", 0b11100011, 9, 1);
-	write_string("Hold: Select=analog Start=advanced", 0b11100011, 3, 29);
+	write_string("Hold: Coin=analog Start=advanced", 0b11100011, 3, 29);
+	
+	write_string("(Use 'Mount FW file' option to", 0b11100011, 3, 25);
+	write_string("  update the STM32 Firmware.)", 0b11100011, 3, 26);
 
 	// Draw pads
 	for (j = 0; j < PAD_COUNT; j++)
 	{
-		write_stringf("JOY %d", 0xFF, pad_offset_x[j] - 5, pad_offset_y[j] + 3, j + 1);
+		write_stringf(" P%d", 0xFF, pad_offset_x[j] - 5, pad_offset_y[j] + 3, j + 1);
 		draw_pad(pad_offset_x[j], pad_offset_y[j]);
 	}
 }
@@ -176,7 +179,7 @@ void page_inputtester_analog()
 	page_border(0b00000111);
 
 	write_string("- JAMMIX Test Jig v1.0 -", 0b11100011, 9, 1);
-	write_string("Hold: Select=digital Start=advanced", 0b11100011, 3, 29);
+	write_string("Hold: Coin=digital Start=advanced", 0b11100011, 3, 29);
 
 	for (j = 0; j < PAD_COUNT; j++)
 	{
@@ -195,9 +198,9 @@ void page_inputtester_advanced()
 	page_border(0b00000111);
 
 	write_string("- JAMMIX Test Jig v1.0 -", 0b11100011, 9, 1);
-	write_string("Hold: Select=digital Start=analog", 0b11100011, 3, 29);
+	write_string("Hold: Coin=digital Start=analog", 0b11100011, 3, 29);
 
-	write_string("RLDUABXYLRsS", 0xFF, 7, 3);
+	write_string("RLDUABXYLRCS", 0xFF, 7, 3);
 	write_string("AX", 0xFF, 22, 3);
 	write_string("AY", 0xFF, 27, 3);
 
@@ -896,7 +899,7 @@ void small_delay() {
 
 char check_ack() {
 	if ( wait_uart_recv()!=0x79 ) {
-		sprintf(mystring, "NACK Error! rxd_data: %02X", rxd_data); write_string(mystring, 0b11100011, 0, 18);
+		sprintf(mystring, "NACK! rxd_data: %02X", rxd_data); write_string(mystring, 0b11100011, 0, 18);
 		return 1;
 	}
 	else {
@@ -1046,9 +1049,11 @@ char update_fw() {
 	write_string("     JAMMIX Firmware Updater v1.0      ", 0b11100011, 0, text_line); text_line++;
 	text_line++;
 	write_string("1. Set DIP switches 7, 8, 9 to ON", 0b11100011, 0, text_line); text_line++;
-	write_string("2. Use 'Mount fw file' to Load STM32_FW", 0b11100011, 0, text_line); text_line++;
-	write_string("3. Briefly press the STM32 Reset button", 0b11100011, 0, text_line); text_line++;
-	write_string("4. Use 'Flash Firmware!' option", 0b11100011, 0, text_line); text_line++;
+	write_string("2. Reset the STM32 (see below)", 0b11100011, 0, text_line); text_line++;
+	write_string("3. Use 'Flash Firmware!' OSD option", 0b11100011, 0, text_line); text_line++;
+	text_line++;
+	write_string("To reset the STM32, briefly short", 0b11100011, 0, text_line); text_line++;
+	write_string("pins 1 and 3 on the PROG header.", 0b11100011, 0, text_line); text_line++;
 	
 	while (1) {
 		if (load_fw) break;
@@ -1075,7 +1080,7 @@ char update_fw() {
 	temp = sd_flags[4];	// Clear any old flags by reading first.
 	text_line++;
 	write_string("(if Erasing takes more than 20 seconds,", 0b11100011, 0, text_line); text_line++;
-	write_string("please use Reset core option on OSD,", 0b11100011, 0, text_line); text_line++;
+	write_string("please use 'Reset core' option on OSD,", 0b11100011, 0, text_line); text_line++;
 	write_string("then retry the steps)", 0b11100011, 0, text_line); text_line++;
 	text_line++;
 	nack_byte = erase_chip();

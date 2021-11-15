@@ -186,7 +186,7 @@ async_receiver async_receiver_stm
 );
 
 
-localparam [8:0] VGA_WIDTH = 9'd308;
+localparam [8:0] VGA_WIDTH = 9'd316;
 localparam [8:0] VGA_HEIGHT = 9'd240;
 
 wire _hb;
@@ -360,8 +360,8 @@ wire colram_wr = !cpu_wr_n && colram_cs;
 // ------
 
 // Program ROM - 0x0000 - 0x3FFF (0x4000 / 16384 bytes)
-//dpram #(14,8, "rom.hex") pgrom
-dpram #(14,8, "os.hex") pgrom
+ dpram #(14,8, "rom.hex") pgrom
+//dpram #(14,8, "os.hex") pgrom
 (
 	.clock_a(clk_sys),
 	.address_a(cpu_addr[13:0]),
