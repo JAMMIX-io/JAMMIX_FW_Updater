@@ -185,9 +185,47 @@ assign VGA_F1 = 0;
 assign VGA_SCALER = 0;
 assign HDMI_FREEZE = 0;
 
-assign AUDIO_S = 0;
-assign AUDIO_L = 0;
-assign AUDIO_R = 0;
+
+(*noprune*) reg [23:0] lat_cnt;
+reg SD_MISO_1;
+wire sd_miso_falling = SD_MISO_1 && !SD_MISO;
+
+reg start_cnt;
+
+always @(posedge clk_sys or posedge reset)
+if (reset) begin
+	start_cnt <= 0;
+end
+else begin
+	SD_MISO_1 <= SD_MISO;
+
+	if (sd_miso_falling) begin
+		lat_cnt <= 0;
+		start_cnt <= 1'b1;
+	end
+	if (joystick_0[0]) start_cnt <= 1'b0;
+
+	if (start_cnt) begin
+		if (lat_cnt < 24'hffffff) lat_cnt <= lat_cnt + 1;
+	end
+end
+
+
+reg [9:0] sine_clk_div;
+always @(posedge CLK_AUDIO) sine_clk_div <= sine_clk_div + 1;
+
+wire sine_clk = sine_clk_div==0;
+
+wire [15:0] sine;
+wave_gen_sin wave_gen_sin_inst
+(
+	.clk( sine_clk ),	// input  clk
+	.sine( sine )		// output  [15:0] sine
+);
+
+assign AUDIO_L = (status[12:10]>0) ? (sine<<2) : 15'h0000;	// status[12:10] is so audio test is only enabled when Test Pattern > 0 in the OSD.
+assign AUDIO_R = (status[12:10]>0) ? (sine<<2) : 15'h0000;
+assign AUDIO_S = 1;
 assign AUDIO_MIX = 0;
 
 assign LED_DISK = 0;
@@ -200,7 +238,7 @@ assign BUTTONS = 0;
 // 0         1         2         3          4         5         6
 // 01234567890123456789012345678901 23456789012345678901234567890123
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-// XX      XX
+// XXXXXX  XXXXX
 
 wire [1:0] ar = status[9:8];
 
@@ -212,11 +250,11 @@ localparam CONF_STR = {
 	"JAMMIX_FW;;",
 	"-;",
 	"S0,BIN,Mount FW file;",
-	"-;",
 	"T1,Flash Firmware!;",
 	"-;",
-	"T0,Reset core (retry);",
+	"OAC,Test Pattern,Off,White,Red,Green,Blue,Ramp;",
 	"-;",
+	"T0,Reset core (retry);",
 	"F0,BIN,Load BIOS;",
 	"F1,PF,Load Font;",
 	"-;",
@@ -427,7 +465,9 @@ system system(
 	.status(status),
 	
 	.uart_txd(UART_TXD),	// From core to STM32 RX pin.
-	.uart_rxd(UART_RXD)	// From STM32 TX pin to core.
+	.uart_rxd(UART_RXD),	// From STM32 TX pin to core.
+	
+	.patt_sel( status[12:10] )
 );
 
 endmodule

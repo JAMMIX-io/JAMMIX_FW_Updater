@@ -1048,9 +1048,10 @@ char update_fw() {
 	text_line = 3;
 	write_string("     JAMMIX Firmware Updater v1.0      ", 0b11100011, 0, text_line); text_line++;
 	text_line++;
-	write_string("1. Set DIP switches 7, 8, 9 to ON", 0b11100011, 0, text_line); text_line++;
-	write_string("2. Reset the STM32 (see below)", 0b11100011, 0, text_line); text_line++;
-	write_string("3. Use 'Flash Firmware!' OSD option", 0b11100011, 0, text_line); text_line++;
+	write_string("1. Make a note of your DIP settings", 0b11100011, 0, text_line); text_line++;
+	write_string("2. Set DIP switches 7, 8, 9 to ON", 0b11100011, 0, text_line); text_line++;
+	write_string("3. Reset the STM32 (see below)", 0b11100011, 0, text_line); text_line++;
+	write_string("4. Use 'Flash Firmware!' OSD option", 0b11100011, 0, text_line); text_line++;
 	text_line++;
 	write_string("To reset the STM32, briefly short", 0b11100011, 0, text_line); text_line++;
 	write_string("pins 1 and 3 on the PROG header.", 0b11100011, 0, text_line); text_line++;
@@ -1114,7 +1115,7 @@ char update_fw() {
 	}
 	
 	write_string("DONE!                     ", 0b11100011, 0, 19);
-	write_string("Set DIP switches 7, 8, 9 to OFF.", 0b11100011, 0, 23);
+	write_string("Set DIPs to your original settings.", 0b11100011, 0, 23);
 	write_string("Disconnect and reconnect power to JAMMIX.", 0b11100011, 0, 24);
 	
 	//return 0;

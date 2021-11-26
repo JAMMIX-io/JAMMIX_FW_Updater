@@ -79,7 +79,9 @@ module system (
 	input [31:0] status,
 	
 	output uart_txd,
-	input uart_rxd
+	input uart_rxd,
+	
+	input [2:0] patt_sel
 );
 
 sd_buff	sd_buff_inst (
@@ -201,7 +203,7 @@ wire [8:0] vcnt;
 jtframe_vtimer #(
 	.HB_START(VGA_WIDTH - 1'b1),
 	.VB_START(VGA_HEIGHT- 1'b1)
-) vtimer 
+) vtimer
 (
 	.clk(clk_sys),
 	.pxl_cen(ce_pix),
@@ -225,10 +227,82 @@ wire [11:0] colram_addr = chram_addr;
 wire [11:0] chrom_addr = {1'b0, chmap_data_out[7:0], chpos_y};
 wire chpixel = chrom_data_out[chpos_x[2:0]];
 
+
+wire [23:0] ramp_rgb = (hcnt>20 && hcnt<=290 && vcnt>40 && vcnt<=60)   ? {hcnt[8:1], hcnt[8:1], hcnt[8:1]} :// White ramp.
+							  (hcnt>20 && hcnt<=290 && vcnt>80 && vcnt<=100)  ? {hcnt[8:1], 8'h00, 8'h00} :			// Red ramp.
+							  (hcnt>20 && hcnt<=290 && vcnt>120 && vcnt<=140) ? {8'h00, hcnt[8:1], 8'h00} :			// Green ramp.
+							  (hcnt>20 && hcnt<=290 && vcnt>160 && vcnt<=180) ? {8'h00, 8'h00, hcnt[8:1]} :			// Blue ramp.
+																												 24'h000000;
+wire [23:0] patt_rgb = (patt_sel==1) ? 24'hffffff :	// White.
+							  (patt_sel==2) ? 24'hff0000 :	// Red.
+							  (patt_sel==3) ? 24'h00ff00 :	// Green.
+							  (patt_sel==4) ? 24'h0000ff :	// Blue.
+							  (patt_sel==5) ? ramp_rgb :		// Ramp.
+												   24'h000000;
+
+wire my_de = hcnt>10 && hcnt<=300 && vcnt>20 && vcnt<=230;
+
 // RGB output
-assign VGA_R = chpixel ? {{2{colram_data_out[2:0]}},2'b0} : 8'b0;
-assign VGA_G = chpixel ? {{2{colram_data_out[5:3]}},2'b0} : 8'b0;
-assign VGA_B = chpixel ? {{3{colram_data_out[7:6]}},2'b0} : 8'b0;
+assign VGA_R = (patt_sel>0 && my_de) ? patt_rgb[23:16] : chpixel ? {{2{colram_data_out[2:0]}},2'b0} : 8'h00;
+assign VGA_G = (patt_sel>0 && my_de) ? patt_rgb[15:8]  : chpixel ? {{2{colram_data_out[5:3]}},2'b0} : 8'h00;
+assign VGA_B = (patt_sel>0 && my_de) ? patt_rgb[7:0]   : chpixel ? {{3{colram_data_out[7:6]}},2'b0} : 8'h00;
+
+/*
+reg [2:0] patt_state;
+reg [23:0] patt_rgb;
+
+reg old_toggle;
+
+always @(posedge clk_sys or posedge reset)
+if (reset) begin
+	patt_state <= 3'd0;
+	old_toggle <= ps2_key[8];
+end
+else begin
+	case (patt_state)
+		0: begin
+			if (ps2_key[9] && (old_toggle!=ps2_key[8]) && ps2_key[7:0]==8'h21) begin	// Is the "c" key pressed?
+				old_toggle <= ps2_key[8];
+				patt_state <= patt_state + 1;
+			end
+		end
+		
+		1: begin	// White.
+			if (ps2_key[9] && (old_toggle!=ps2_key[8]) && ps2_key[7:0]==8'h21) begin	// Is the "c" key pressed?
+				old_toggle <= ps2_key[8];
+				patt_rgb = 23'hffffff;
+				patt_state <= patt_state + 1;
+			end
+		end
+
+		2: begin	// Red.
+			if (ps2_key[9] && (old_toggle!=ps2_key[8]) && ps2_key[7:0]==8'h21) begin	// Is the "c" key pressed?
+				old_toggle <= ps2_key[8];
+				patt_rgb = 23'hff0000;
+				patt_state <= patt_state + 1;
+			end
+		end
+		
+		3: begin	// Green.
+			if (ps2_key[9] && (old_toggle!=ps2_key[8]) && ps2_key[7:0]==8'h21) begin	// Is the "c" key pressed?
+				old_toggle <= ps2_key[8];
+				patt_rgb = 23'h00ff00;
+				patt_state <= patt_state + 1;
+			end
+		end
+
+		4: begin	// Blue.
+			if (ps2_key[9] && (old_toggle!=ps2_key[8]) && ps2_key[7:0]==8'h21) begin	// Is the "c" key pressed?
+				patt_rgb = 23'h0000ff;
+				old_toggle <= ps2_key[8];
+				patt_state <= 0;
+			end
+		end
+
+		default:;
+	endcase
+end
+*/
 
 // CPU control signals
 wire [15:0] cpu_addr;

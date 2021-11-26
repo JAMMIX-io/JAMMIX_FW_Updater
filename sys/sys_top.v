@@ -136,7 +136,9 @@ wire SD_CS, SD_CLK, SD_MOSI;
 `else
 	wire sd_miso = 1;
 `endif
-wire SD_MISO = mcp_sdcd ? sd_miso : SD_SPI_MISO;
+//wire SD_MISO = mcp_sdcd ? sd_miso : SD_SPI_MISO;
+wire SD_MISO = SDIO_DAT[0];
+
 
 `ifndef MISTER_DUAL_SDRAM
 	assign SDIO_DAT[2:1]= 2'bZZ;
